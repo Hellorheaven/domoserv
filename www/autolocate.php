@@ -1,6 +1,6 @@
 <?php
 require_once("/etc/default/domoserv");
-require_once("./bin/geolocation.php");
+require_once("./function/geolocation.php");
 date_default_timezone_set('Europe/Paris');
 $now = date("Y-m-d H:i:s");
 //$filename = '/surveillance/log/locate.log';
