@@ -6,4 +6,9 @@ $zlogin = ;
 $zpass = ;
 $zdevice = ; 
 $ztoken = ;
+$dbname = ;
+$dbport = ;
+$dbhost = ;
+$dbuser = ;
+$dbpass = ;
 ?>
