@@ -37,6 +37,9 @@ CREATE  TABLE IF NOT EXISTS `domoserv`.`module` (
   `module_type` INT(3) NOT NULL ,
   `module_description` VARCHAR(100) NULL DEFAULT NULL ,
   `room_id` INT NOT NULL ,
+  `notify` TINYINT(1) NOT NULL ,
+  `notify_title` VARCHAR(100) NULL ,
+  `notify_message` VARCHAR(300) NULL ,
   PRIMARY KEY (`module_id`, `module_protocol`, `zibase_id`, `room_id`) )
 ENGINE = MyISAM
 DEFAULT CHARACTER SET = utf8;
@@ -160,12 +163,7 @@ CREATE  TABLE IF NOT EXISTS `domoserv`.`usertracking` (
   `longitude` FLOAT NOT NULL ,
   `latitude` FLOAT NOT NULL ,
   `timestamp` TIMESTAMP NOT NULL ,
-  PRIMARY KEY (`user_id`, `timestamp`) ,
-  CONSTRAINT `fk_table1_user1`
-    FOREIGN KEY (`user_id` )
-    REFERENCES `domoserv`.`user` (`user_id` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+  PRIMARY KEY (`user_id`, `timestamp`) )
 ENGINE = InnoDB;
 
 SHOW WARNINGS;
@@ -180,102 +178,8 @@ CREATE  TABLE IF NOT EXISTS `domoserv`.`userhome` (
   `user_id` INT NOT NULL ,
   `timestamp` TIMESTAMP NOT NULL ,
   `home` TINYINT(1) NOT NULL ,
-  PRIMARY KEY (`user_id`) ,
-  CONSTRAINT `fk_userlocation_user1`
-    FOREIGN KEY (`user_id` )
-    REFERENCES `domoserv`.`user` (`user_id` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+  PRIMARY KEY (`user_id`) )
 ENGINE = InnoDB;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `domoserv`.`teleinfo_mono`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`teleinfo_mono` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`teleinfo_mono` (
-  `timestamp` BIGINT(10) NOT NULL ,
-  `rec_date` DATE NOT NULL ,
-  `rec_time` TIME NOT NULL ,
-  `adco` VARCHAR(12) NOT NULL ,
-  `optarif` VARCHAR(4) NOT NULL ,
-  `isousc` TINYINT(2) NULL DEFAULT NULL ,
-  `base` BIGINT(9) NULL DEFAULT NULL ,
-  `hchc` BIGINT(9) NULL DEFAULT NULL ,
-  `hchp` BIGINT(9) NULL DEFAULT NULL ,
-  `ejphn` BIGINT(9) NULL DEFAULT NULL ,
-  `ejphpm` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjb` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjb` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjw` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjw` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjr` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjr` BIGINT(9) NULL DEFAULT NULL ,
-  `pejp` VARCHAR(4) NULL DEFAULT NULL ,
-  `ptec` VARCHAR(4) NULL DEFAULT NULL ,
-  `demain` VARCHAR(4) NULL DEFAULT NULL ,
-  `iinst` TINYINT(3) NULL DEFAULT NULL ,
-  `adps` TINYINT(3) NULL DEFAULT NULL ,
-  `imax` TINYINT(3) NULL DEFAULT NULL ,
-  `papp` INT(5) NULL DEFAULT NULL ,
-  `hhphc` VARCHAR(1) NULL DEFAULT NULL ,
-  `motdetat` VARCHAR(6) NULL DEFAULT NULL )
-ENGINE = MyISAM
-DEFAULT CHARACTER SET = utf8;
-
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `timestamp` ON `domoserv`.`teleinfo_mono` (`timestamp` ASC) ;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `domoserv`.`teleinfo_tri`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`teleinfo_tri` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`teleinfo_tri` (
-  `timestamp` BIGINT(10) NOT NULL ,
-  `rec_date` DATE NOT NULL ,
-  `rec_time` TIME NOT NULL ,
-  `adco` VARCHAR(12) NOT NULL ,
-  `optarif` VARCHAR(4) NOT NULL ,
-  `isousc` TINYINT(2) NULL DEFAULT NULL ,
-  `base` BIGINT(9) NULL DEFAULT NULL ,
-  `hchc` BIGINT(9) NULL DEFAULT NULL ,
-  `hchp` BIGINT(9) NULL DEFAULT NULL ,
-  `ejphn` BIGINT(9) NULL DEFAULT NULL ,
-  `ejphpm` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjb` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjb` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjw` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjw` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjr` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjr` BIGINT(9) NULL DEFAULT NULL ,
-  `pejp` VARCHAR(4) NULL DEFAULT NULL ,
-  `ptec` VARCHAR(4) NULL DEFAULT NULL ,
-  `demain` VARCHAR(4) NULL DEFAULT NULL ,
-  `iinst1` TINYINT(3) NULL DEFAULT NULL ,
-  `iinst2` TINYINT(3) NULL DEFAULT NULL ,
-  `iinst3` TINYINT(3) NULL DEFAULT NULL ,
-  `adir1` TINYINT(3) NULL DEFAULT NULL ,
-  `adir2` TINYINT(3) NULL DEFAULT NULL ,
-  `adir3` TINYINT(3) NULL DEFAULT NULL ,
-  `imax1` TINYINT(3) NULL DEFAULT NULL ,
-  `imax2` TINYINT(3) NULL DEFAULT NULL ,
-  `imax3` TINYINT(3) NULL DEFAULT NULL ,
-  `papp` INT(5) NULL DEFAULT NULL ,
-  `hhphc` VARCHAR(1) NULL DEFAULT NULL ,
-  `motdetat` VARCHAR(6) NULL DEFAULT NULL ,
-  `ppot` TINYINT(2) NULL DEFAULT NULL )
-ENGINE = MyISAM
-DEFAULT CHARACTER SET = utf8;
-
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `timestamp` ON `domoserv`.`teleinfo_tri` (`timestamp` ASC) ;
 
 SHOW WARNINGS;
 
