@@ -23,10 +23,8 @@ for ($i=0;;$i++){
 
   if ( $timestamp >= $datetimestamp) { 
     $lastdate= date('Y-m-d H:i:s',$timestamp);
-    $QSUID = "select user_id from domoserv.user where userlatitude=".$id_user[$i].";";
-    $SUID = mysql_query($QSUID) or die('Error, query '.$QSUID.' failed. ' . mysql_error());
-    $UID = mysql_result($SUID,0);
-    $QIUT = "insert into domoserv.usertracking (user_id,longitude,latitude,timestamp) values ('".$UID."','".$longitude."','".$latitude."','".$lastdate."');";
+    $UID= "(select user_id from domoserv.user where userlatitude=".$id_user[$i].")";
+    $QIUT = "insert into domoserv.usertracking (user_id,longitude,latitude,timestamp) values (".$UID.",'".$longitude."','".$latitude."','".$lastdate."');";
     $IUT = mysql_query($QIUT) or die('Error, query '.$QIUT.' failed. ' . mysql_error());
 
     $dhome = distance($home_lat,$home_long,$latitude,$longitude,K); //K for kilometer, M for miles, N for nautic Miles
@@ -36,7 +34,7 @@ for ($i=0;;$i++){
       $QSH = "select home from domoserv.userhome where user_id=".$UID.";";
       $SH = mysql_query($QSH) or die('Error, query '.$QSH.' failed. ' . mysql_error());
       if (mysql_result($SH,0) == null) {
-        $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values ('".$UID."','".$lastdate."',1);";
+        $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',1);";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       } else {
         $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 1 where user_id = '".$UID."'";
@@ -47,7 +45,7 @@ for ($i=0;;$i++){
       $QSH = "select home from domoserv.userhome where user_id=".$UID.";";
       $SH = mysql_query($QSH) or die('Error, query '.$QSH.' failed. ' . mysql_error());
       if (mysql_result($SH,0) == null) {
-        $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values ('".$UID."','".$lastdate."',0);";
+        $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',0);";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       } else {
         $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 0 where user_id = '".$UID."'";
