@@ -37,7 +37,7 @@ for ($i=0;;$i++){
         $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',1);";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       } else {
-        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 1 where user_id = '".$UID."'";
+        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 1 where user_id = ".$UID."";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       }	
     } else {
@@ -48,7 +48,7 @@ for ($i=0;;$i++){
         $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',0);";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       } else {
-        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 0 where user_id = '".$UID."'";
+        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 0 where user_id = ".$UID."";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       }
     }
