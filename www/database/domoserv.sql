@@ -1,195 +1,127 @@
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
-SHOW WARNINGS;
+DROP SCHEMA IF EXISTS `mydb` ;
+CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci ;
 DROP SCHEMA IF EXISTS `domoserv` ;
 CREATE SCHEMA IF NOT EXISTS `domoserv` DEFAULT CHARACTER SET utf8 ;
-SHOW WARNINGS;
+USE `mydb` ;
 USE `domoserv` ;
 
 -- -----------------------------------------------------
--- Table `domoserv`.`room`
+-- Table `room`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`room` ;
+DROP TABLE IF EXISTS `room` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`room` (
-  `room_id` INT NOT NULL AUTO_INCREMENT ,
-  `room_name` VARCHAR(45) NULL ,
-  `house_name` VARCHAR(45) NULL ,
+CREATE  TABLE IF NOT EXISTS `room` (
+  `room_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `room_name` VARCHAR(45) NOT NULL ,
+  `house_name` VARCHAR(45) NULL DEFAULT NULL ,
   PRIMARY KEY (`room_id`) )
-ENGINE = InnoDB;
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `domoserv`.`module`
+-- Table `module`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`module` ;
+DROP TABLE IF EXISTS `module` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`module` (
-  `module_id` INT NOT NULL AUTO_INCREMENT ,
-  `module_protocol` INT(3) NOT NULL ,
+CREATE  TABLE IF NOT EXISTS `module` (
+  `module_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `room_id` INT(11) NOT NULL ,
   `zibase_id` VARCHAR(45) NOT NULL ,
+  `module_protocol` INT(3) NOT NULL ,
   `module_name` VARCHAR(45) NOT NULL ,
   `module_type` INT(3) NOT NULL ,
   `module_description` VARCHAR(100) NULL DEFAULT NULL ,
-  `room_id` INT NOT NULL ,
-  `notify` TINYINT(1) NOT NULL ,
-  `notify_title` VARCHAR(100) NULL ,
-  `notify_message` VARCHAR(300) NULL ,
-  PRIMARY KEY (`module_id`, `module_protocol`, `zibase_id`, `room_id`) )
-ENGINE = MyISAM
+  `notify` TINYINT(1) NULL DEFAULT '0' ,
+  `notify_title` VARCHAR(100) NULL DEFAULT NULL ,
+  `notify_message` VARCHAR(300) NULL DEFAULT NULL ,
+  PRIMARY KEY (`module_id`) ,
+  CONSTRAINT `fk_module_room1`
+    FOREIGN KEY (`room_id` )
+    REFERENCES `room` (`room_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
-CREATE INDEX `fk_module_room1` ON `domoserv`.`module` (`room_id` ASC) ;
+CREATE INDEX `fk_module_room1_idx` ON `module` (`room_id` ASC) ;
 
-SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `domoserv`.`ping_states`
+-- Table `battery`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`ping_states` ;
+DROP TABLE IF EXISTS `battery` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`ping_states` (
-  `machine` VARCHAR(15) NOT NULL DEFAULT '0.0.0.0' ,
-  `datetime` DATETIME NOT NULL ,
-  `status` BINARY(1) NOT NULL DEFAULT '0' ,
-  PRIMARY KEY (`machine`, `datetime`) )
-ENGINE = MyISAM
-DEFAULT CHARACTER SET = utf8;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `domoserv`.`user`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`user` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`user` (
-  `user_id` INT NOT NULL AUTO_INCREMENT ,
-  `username` VARCHAR(45) NOT NULL ,
-  `firstname` VARCHAR(45) NOT NULL ,
-  `lastname` VARCHAR(45) NOT NULL ,
-  `password` VARCHAR(32) NOT NULL ,
-  `userlevel` VARCHAR(45) NOT NULL DEFAULT 'user' ,
-  `userlatitude` VARCHAR(45) NULL ,
-  PRIMARY KEY (`user_id`) )
-ENGINE = MyISAM
-DEFAULT CHARACTER SET = utf8;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `domoserv`.`usernotify`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`usernotify` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`usernotify` (
-  `user_id` INT NOT NULL ,
-  `devices` VARCHAR(45) NOT NULL ,
-  `type` VARCHAR(32) NOT NULL ,
-  `contact` VARCHAR(100) NOT NULL ,
-  PRIMARY KEY (`user_id`, `devices`, `type`) )
-ENGINE = MyISAM
-DEFAULT CHARACTER SET = utf8;
-
-SHOW WARNINGS;
-CREATE INDEX `fk_usernotify_user1` ON `domoserv`.`usernotify` (`user_id` ASC) ;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `domoserv`.`battery`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`battery` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`battery` (
-  `module_protocol` INT(3) NOT NULL ,
-  `zibase_id` VARCHAR(45) NOT NULL ,
+CREATE  TABLE IF NOT EXISTS `battery` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `module_id` INT(11) NOT NULL ,
   `curdate` DATE NOT NULL ,
   `curtime` TIME NOT NULL ,
   `value` VARCHAR(45) NOT NULL ,
-  PRIMARY KEY (`module_protocol`, `zibase_id`) ,
+  PRIMARY KEY (`id`) ,
   CONSTRAINT `fk_battery_module1`
-    FOREIGN KEY (`module_protocol` , `zibase_id` )
-    REFERENCES `domoserv`.`module` (`module_protocol` , `zibase_id` )
+    FOREIGN KEY (`module_id` )
+    REFERENCES `module` (`module_id` )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
+CREATE INDEX `fk_battery_module1_idx` ON `battery` (`module_id` ASC) ;
+
 
 -- -----------------------------------------------------
--- Table `domoserv`.`module_states`
+-- Table `module_states`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`module_states` ;
+DROP TABLE IF EXISTS `module_states` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`module_states` (
-  `module_protocol` INT(3) NOT NULL ,
-  `zibase_id` VARCHAR(45) NOT NULL ,
-  `curdatetime` DATETIME NULL ,
-  `c` VARCHAR(45) NULL ,
-  `c1` VARCHAR(45) NULL ,
-  `c2` VARCHAR(45) NULL ,
-  `c3` VARCHAR(45) NULL ,
-  `c4` VARCHAR(45) NULL ,
-  PRIMARY KEY (`module_protocol`, `zibase_id`) ,
+CREATE  TABLE IF NOT EXISTS `module_states` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `module_id` INT(11) NOT NULL ,
+  `curdatetime` DATETIME NULL DEFAULT NULL ,
+  `c` VARCHAR(45) NULL DEFAULT NULL ,
+  `c1` VARCHAR(45) NULL DEFAULT NULL ,
+  `c2` VARCHAR(45) NULL DEFAULT NULL ,
+  `c3` VARCHAR(45) NULL DEFAULT NULL ,
+  `c4` VARCHAR(45) NULL DEFAULT NULL ,
+  PRIMARY KEY (`id`) ,
   CONSTRAINT `fk_module_states_module1`
-    FOREIGN KEY (`module_protocol` , `zibase_id` )
-    REFERENCES `domoserv`.`module` (`module_protocol` , `zibase_id` )
+    FOREIGN KEY (`module_id` )
+    REFERENCES `module` (`module_id` )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
+CREATE INDEX `fk_module_states_module1_idx` ON `module_states` (`module_id` ASC) ;
 
--- -----------------------------------------------------
--- Table `domoserv`.`usertracking`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`usertracking` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`usertracking` (
-  `user_id` INT NOT NULL ,
-  `longitude` FLOAT NOT NULL ,
-  `latitude` FLOAT NOT NULL ,
-  `timestamp` TIMESTAMP NOT NULL ,
-  PRIMARY KEY (`user_id`, `timestamp`) )
-ENGINE = InnoDB;
-
-SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `domoserv`.`userhome`
+-- Table `ping_states`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`userhome` ;
+DROP TABLE IF EXISTS `ping_states` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`userhome` (
-  `user_id` INT NOT NULL ,
-  `timestamp` TIMESTAMP NOT NULL ,
-  `home` TINYINT(1) NOT NULL ,
-  PRIMARY KEY (`user_id`) )
-ENGINE = InnoDB;
+CREATE  TABLE IF NOT EXISTS `ping_states` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `machine` VARCHAR(15) NOT NULL DEFAULT '0.0.0.0' ,
+  `datetime` DATETIME NOT NULL ,
+  `status` TINYINT(1) NOT NULL DEFAULT '0' ,
+  PRIMARY KEY (`id`) )
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `domoserv`.`teleinfo_mono`
+-- Table `teleinfo_mono`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`teleinfo_mono` ;
+DROP TABLE IF EXISTS `teleinfo_mono` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`teleinfo_mono` (
+CREATE  TABLE IF NOT EXISTS `teleinfo_mono` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `timestamp` BIGINT(10) NOT NULL ,
   `rec_date` DATE NOT NULL ,
   `rec_time` TIME NOT NULL ,
@@ -215,22 +147,21 @@ CREATE  TABLE IF NOT EXISTS `domoserv`.`teleinfo_mono` (
   `imax` TINYINT(3) NULL DEFAULT NULL ,
   `papp` INT(5) NULL DEFAULT NULL ,
   `hhphc` VARCHAR(1) NULL DEFAULT NULL ,
-  `motdetat` VARCHAR(6) NULL DEFAULT NULL )
-ENGINE = MyISAM
+  `motdetat` VARCHAR(6) NULL DEFAULT NULL ,
+  PRIMARY KEY (`id`) )
+ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `timestamp` ON `domoserv`.`teleinfo_mono` (`timestamp` ASC) ;
+CREATE UNIQUE INDEX `timestamp` ON `teleinfo_mono` (`timestamp` ASC) ;
 
-SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `domoserv`.`teleinfo_tri`
+-- Table `teleinfo_tri`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `domoserv`.`teleinfo_tri` ;
+DROP TABLE IF EXISTS `teleinfo_tri` ;
 
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `domoserv`.`teleinfo_tri` (
+CREATE  TABLE IF NOT EXISTS `teleinfo_tri` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `timestamp` BIGINT(10) NOT NULL ,
   `rec_date` DATE NOT NULL ,
   `rec_time` TIME NOT NULL ,
@@ -263,14 +194,100 @@ CREATE  TABLE IF NOT EXISTS `domoserv`.`teleinfo_tri` (
   `papp` INT(5) NULL DEFAULT NULL ,
   `hhphc` VARCHAR(1) NULL DEFAULT NULL ,
   `motdetat` VARCHAR(6) NULL DEFAULT NULL ,
-  `ppot` TINYINT(2) NULL DEFAULT NULL )
-ENGINE = MyISAM
+  `ppot` TINYINT(2) NULL DEFAULT NULL ,
+  PRIMARY KEY (`id`) )
+ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `timestamp` ON `domoserv`.`teleinfo_tri` (`timestamp` ASC) ;
+CREATE UNIQUE INDEX `timestamp` ON `teleinfo_tri` (`timestamp` ASC) ;
 
-SHOW WARNINGS;
+
+-- -----------------------------------------------------
+-- Table `user`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `user` ;
+
+CREATE  TABLE IF NOT EXISTS `user` (
+  `user_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `username` VARCHAR(45) NOT NULL ,
+  `firstname` VARCHAR(45) NOT NULL ,
+  `lastname` VARCHAR(45) NOT NULL ,
+  `password` VARCHAR(32) NOT NULL ,
+  `userlevel` VARCHAR(45) NOT NULL DEFAULT 'user' ,
+  `userlatitude` VARCHAR(45) NULL DEFAULT NULL ,
+  PRIMARY KEY (`user_id`) )
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `userhome`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `userhome` ;
+
+CREATE  TABLE IF NOT EXISTS `userhome` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `user_id` INT(11) NOT NULL ,
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  `home` TINYINT(1) NOT NULL ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_userhome_user1`
+    FOREIGN KEY (`user_id` )
+    REFERENCES `user` (`user_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE INDEX `fk_userhome_user1_idx` ON `userhome` (`user_id` ASC) ;
+
+
+-- -----------------------------------------------------
+-- Table `usernotify`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `usernotify` ;
+
+CREATE  TABLE IF NOT EXISTS `usernotify` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `user_id` INT(11) NOT NULL ,
+  `devices` VARCHAR(45) NOT NULL ,
+  `type` VARCHAR(32) NOT NULL ,
+  `contact` VARCHAR(100) NOT NULL ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_usernotify_user1`
+    FOREIGN KEY (`user_id` )
+    REFERENCES `user` (`user_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE INDEX `fk_usernotify_user1_idx` ON `usernotify` (`user_id` ASC) ;
+
+
+-- -----------------------------------------------------
+-- Table `usertracking`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `usertracking` ;
+
+CREATE  TABLE IF NOT EXISTS `usertracking` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `user_id` INT(11) NOT NULL ,
+  `longitude` FLOAT NOT NULL ,
+  `latitude` FLOAT NOT NULL ,
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_usertracking_user1`
+    FOREIGN KEY (`user_id` )
+    REFERENCES `user` (`user_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE INDEX `fk_usertracking_user1_idx` ON `usertracking` (`user_id` ASC) ;
+
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
