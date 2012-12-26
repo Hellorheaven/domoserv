@@ -31,24 +31,24 @@ for ($i=0;;$i++){
 
     if ( $dhome <= 1 ) { //test if the distance is in the range of 0 to 1 kilometer
       // at home
-      $QSH = "select home from domoserv.userhome where user_id=".$UID.";";
+      $QSH = "select home from domoserv.userhome where user_id in ".$UID.";";
       $SH = mysql_query($QSH) or die('Error, query '.$QSH.' failed. ' . mysql_error());
       if (mysql_result($SH,0) == null) {
         $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',1);";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       } else {
-        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 1 where user_id = ".$UID."";
+        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 1 where user_id in ".$UID."";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       }	
     } else {
       // not at home
-      $QSH = "select home from domoserv.userhome where user_id=".$UID.";";
+      $QSH = "select home from domoserv.userhome where user_id in ".$UID.";";
       $SH = mysql_query($QSH) or die('Error, query '.$QSH.' failed. ' . mysql_error());
       if (mysql_result($SH,0) == null) {
         $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',0);";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       } else {
-        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 0 where user_id = ".$UID."";
+        $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = 0 where user_id in ".$UID."";
         $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
       }
     }
