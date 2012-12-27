@@ -1,6 +1,6 @@
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
 
 DROP SCHEMA IF EXISTS `domoserv` ;
 CREATE SCHEMA IF NOT EXISTS `domoserv` DEFAULT CHARACTER SET utf8 ;
@@ -22,7 +22,7 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
-CREATE UNIQUE INDEX `room_name` ON `room` (`house_name` ASC, `room_name` ASC) ;
+CREATE UNIQUE INDEX `room_name` ON `room` (`room_name` ASC, `house_name` ASC) ;
 
 SHOW WARNINGS;
 
@@ -82,10 +82,39 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
-CREATE UNIQUE INDEX `battery` ON `battery` (`curdate` ASC, `curtime` ASC) ;
+CREATE UNIQUE INDEX `battery` ON `battery` (`module_id` ASC) ;
 
 SHOW WARNINGS;
 CREATE INDEX `fk_battery_module1_idx` ON `battery` (`module_id` ASC) ;
+
+SHOW WARNINGS;
+
+-- -----------------------------------------------------
+-- Table `host_services`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `host_services` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `host_services` (
+  `host_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `host` VARCHAR(15) NOT NULL DEFAULT '0.0.0.0' ,
+  `port` TINYINT(5) NOT NULL DEFAULT '80' ,
+  `room_id` INT(11) NOT NULL ,
+  `description` VARCHAR(100) NULL DEFAULT NULL ,
+  PRIMARY KEY (`host_id`) ,
+  CONSTRAINT `fk_host_services_room1`
+    FOREIGN KEY (`room_id` )
+    REFERENCES `room` (`room_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+SHOW WARNINGS;
+CREATE UNIQUE INDEX `host_services` ON `host_services` (`host` ASC, `port` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_host_services_room1_idx` ON `host_services` (`room_id` ASC) ;
 
 SHOW WARNINGS;
 
@@ -122,34 +151,6 @@ CREATE INDEX `fk_module_states_module1_idx` ON `module_states` (`module_id` ASC)
 SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `host_services`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `host_services` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `host_services` (
-  `host_id` INT NOT NULL AUTO_INCREMENT ,
-  `host` VARCHAR(15) NOT NULL DEFAULT '0.0.0.0' ,
-  `port` TINYINT(5) NOT NULL DEFAULT '80' ,
-  `room_id` INT(11) NOT NULL ,
-  `description` VARCHAR(100) NULL ,
-  PRIMARY KEY (`host_id`) ,
-  CONSTRAINT `fk_host_services_room1`
-    FOREIGN KEY (`room_id` )
-    REFERENCES `room` (`room_id` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `host_services` ON `host_services` (`host` ASC, `port` ASC) ;
-
-SHOW WARNINGS;
-CREATE INDEX `fk_host_services_room1_idx` ON `host_services` (`room_id` ASC) ;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
 -- Table `ping_states`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `ping_states` ;
@@ -157,7 +158,7 @@ DROP TABLE IF EXISTS `ping_states` ;
 SHOW WARNINGS;
 CREATE  TABLE IF NOT EXISTS `ping_states` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `host_id` INT NOT NULL ,
+  `host_id` INT(11) NOT NULL ,
   `datetime` DATETIME NOT NULL ,
   `status` TINYINT(1) NOT NULL DEFAULT '0' ,
   PRIMARY KEY (`id`) ,
@@ -170,7 +171,7 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
-CREATE UNIQUE INDEX `ping` ON `ping_states` (`datetime` ASC) ;
+CREATE UNIQUE INDEX `ping` ON `ping_states` (`host_id` ASC, `datetime` ASC) ;
 
 SHOW WARNINGS;
 CREATE INDEX `fk_ping_states_host_services1_idx` ON `ping_states` (`host_id` ASC) ;
@@ -286,6 +287,7 @@ CREATE  TABLE IF NOT EXISTS `user` (
   `userlatitude` VARCHAR(45) NULL DEFAULT NULL ,
   PRIMARY KEY (`user_id`) )
 ENGINE = InnoDB
+AUTO_INCREMENT = 2
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
@@ -314,7 +316,7 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
-CREATE UNIQUE INDEX `userhome` ON `userhome` (`user_id` ASC, `timestamp` ASC) ;
+CREATE UNIQUE INDEX `userhome` ON `userhome` (`user_id` ASC) ;
 
 SHOW WARNINGS;
 CREATE INDEX `fk_userhome_user1_idx` ON `userhome` (`user_id` ASC) ;
@@ -328,12 +330,12 @@ DROP TABLE IF EXISTS `usernotify` ;
 
 SHOW WARNINGS;
 CREATE  TABLE IF NOT EXISTS `usernotify` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `usernotify_id` INT(11) NOT NULL AUTO_INCREMENT ,
   `user_id` INT(11) NOT NULL ,
   `devices` VARCHAR(45) NOT NULL DEFAULT 'all' ,
   `type` VARCHAR(32) NOT NULL ,
   `contact` VARCHAR(100) NOT NULL ,
-  PRIMARY KEY (`id`) ,
+  PRIMARY KEY (`usernotify_id`) ,
   CONSTRAINT `fk_usernotify_user1`
     FOREIGN KEY (`user_id` )
     REFERENCES `user` (`user_id` )
@@ -379,6 +381,40 @@ CREATE INDEX `fk_usertracking_user1_idx` ON `usertracking` (`user_id` ASC) ;
 
 SHOW WARNINGS;
 
+-- -----------------------------------------------------
+-- Table `module_notify`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `module_notify` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `module_notify` (
+  `modulenotify_id` INT NOT NULL AUTO_INCREMENT ,
+  `module_id` INT(11) NOT NULL ,
+  `usernotify_id` INT(11) NOT NULL ,
+  PRIMARY KEY (`modulenotify_id`) ,
+  CONSTRAINT `fk_module_notify_module1`
+    FOREIGN KEY (`module_id` )
+    REFERENCES `module` (`module_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_module_notify_usernotify1`
+    FOREIGN KEY (`usernotify_id` )
+    REFERENCES `usernotify` (`usernotify_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_module_notify_module1` ON `module_notify` (`module_id` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_module_notify_usernotify1` ON `module_notify` (`usernotify_id` ASC) ;
+
+SHOW WARNINGS;
+CREATE UNIQUE INDEX `modulenotify` ON `module_notify` (`usernotify_id` ASC, `module_id` ASC) ;
+
+SHOW WARNINGS;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
@@ -389,6 +425,6 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 -- -----------------------------------------------------
 START TRANSACTION;
 USE `domoserv`;
-INSERT INTO `user` (`user_id`, `username`, `firstname`, `lastname`, `password`, `userlevel`, `userlatitude`) VALUES (1, 'admin', 'Administrateur', 'DOMOSERV', '*F51AB0CE61F44E7DBC15CBB26966ADFCE2AEEB73', 'admin', NULL);
+INSERT INTO `user` (`user_id`, `username`, `firstname`, `lastname`, `password`, `userlevel`, `userlatitude`) VALUES (1, 'admin', 'Administrator', 'DomoServ', '*F51AB0CE61F44E7DBC15CBB26966ADFCE2AEEB73', 'admin', NULL);
 
 COMMIT;

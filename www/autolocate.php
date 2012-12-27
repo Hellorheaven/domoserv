@@ -31,26 +31,14 @@ for ($i=0;;$i++){
 
     if ( $dhome <= 1 ) { //test if the distance is in the range of 0 to 1 kilometer
       // at home
-      IsHome ($UID, $lastdate, 1);
+      UpdateIsHome ($UID, $lastdate, 1);
 	  echo "at home";
     } else {
       // not at home
-      IsHome ($UID, $lastdate, 0);
+      UpdateIsHome ($UID, $lastdate, 0);
 	  echo "not at home";
     }
   }  
-}
-
-function IsHome ($UID, $lastdate, $state){
-  $QSH = "select home from domoserv.userhome where user_id in ".$UID.";";
-  $SH = mysql_query($QSH) or die('Error, query '.$QSH.' failed. ' . mysql_error());
-  if (mysql_result($SH,0) == null) {
-    $QUUH = "insert into domoserv.userhome (user_id,timestamp,home) values (".$UID.",'".$lastdate."',".$state.");";
-    $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
-  } else {
-    $QUUH = "update domoserv.userhome set timestamp = '".$lastdate."', home = ".$state." where user_id in ".$UID."";
-    $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
-  }
 }
 
 mysql_close();

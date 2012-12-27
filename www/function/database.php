@@ -23,4 +23,9 @@ if(!$db) {
   // Handle error
   echo "<p>Unable to connect to database</p>";
 }
+
+function UpdateIsHome ($UID, $lastdate, $state){
+    $QUUH = "INSERT INTO domoserv.userhome (user_id,timestamp,home) VALUES (".$UID.",'".$lastdate."',".$state.") ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), timestamp = '".$lastdate."', home = ".$state.";";
+    $UUH = mysql_query($QUUH) or die('Error, query '.$QUUH.' failed. ' . mysql_error());
+}
 ?>
