@@ -5,14 +5,14 @@ date_default_timezone_set('Europe/Paris');
 $now = date("Y-m-d H:i:s");
 
 // locating each user
-for ($i=0;;$i++){
-  if (!array_key_exists($i,$id_user)){
-    break;
-  }
+$QUL = "select userlatitude from domoserv.user where userlatitude is not null";
+$UL = mysql_query($QUL) or die('Error, query '.$QUL.' failed. ' . mysql_error());
+
+while($RUL = mysql_fetch_object($UL)){ 
   // acquire position of the user
-  $url='https://latitude.google.com/latitude/apps/badge/api?user='.$id_user[$i].'&type=json';
-  $latitude=file_get_contents($url);
-  $json=json_decode($latitude,true);
+  $url = 'https://latitude.google.com/latitude/apps/badge/api?user='.$RUL->userlatitude.'&type=json';
+  $latitude = file_get_contents($url);
+  $json = json_decode($latitude,true);
   print $id_user[$i]."<br>";
   $latitude = $json[features][0][geometry][coordinates][0];
   $longitude = $json[features][0][geometry][coordinates][1];
@@ -22,8 +22,8 @@ for ($i=0;;$i++){
   $datetimestamp = ($date->getTimestamp()-10*60);  //minus 10 min
 
   if ( $timestamp >= $datetimestamp) { 
-    $lastdate= date('Y-m-d H:i:s',$timestamp);
-    $UID= "(select user_id from domoserv.user where userlatitude=".$id_user[$i].")";
+    $lastdate = date('Y-m-d H:i:s',$timestamp);
+    $UID = "(select user_id from domoserv.user where userlatitude=".$RUL->userlatitude.")";
     $QIUT = "insert into domoserv.usertracking (user_id,longitude,latitude,timestamp) values (".$UID.",'".$longitude."','".$latitude."','".$lastdate."');";
     $IUT = mysql_query($QIUT) or die('Error, query '.$QIUT.' failed. ' . mysql_error());
 
