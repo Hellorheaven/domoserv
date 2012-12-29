@@ -20,15 +20,15 @@ while($UL = mysql_fetch_object($SUL)){
   $date = new DateTime();
   $datetimestamp = ($date->getTimestamp()-2*60);  //minus 2 min
 
-  if ( $timestamp >= $datetimestamp) { 
+  if ( $timestamp <> $datetimestamp) { 
     $lastdate = date('Y-m-d H:i:s',$timestamp);
     $QIUT = "insert into domoserv.usertracking (user_id,longitude,latitude,timestamp) values (".$UL->user_id.",'".$longitude."','".$latitude."','".$lastdate."');";
     $IUT = mysql_query($QIUT) or die('Error, query '.$QIUT.' failed. ' . mysql_error());
-	$QSULLLR = "select latitude,longitude,range,metric from userlocation where user_id = ".$UL->user_id.";";
+	$QSULLLR = "select latitude,longitude,urange,metric from domoserv.userlocation where user_id = ".$UL->user_id.";";
     $SULLLR = mysql_query($QSULLLR) or die('Error, query '.$QSULLLR.' failed. ' . mysql_error());
     while($ULLLR = mysql_fetch_object($SULLLR)){
       $dhome = distance($ULLLR->latitude,$ULLLR->longitude,$latitude,$longitude,$ULLLR->metric); //K for kilometer, M for miles, N for nautic Miles
-      if ( $dhome <= $ULLLR->range ) { //test if the distance is in the correct range
+      if ( $ULLLR->urange >= $dhome ) { //test if the distance is in the correct range
         // at home
         UpdateIsHome ($UL->user_id, $lastdate, 1);
       } else {

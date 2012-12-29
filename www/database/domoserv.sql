@@ -426,8 +426,8 @@ CREATE  TABLE IF NOT EXISTS `userlocation` (
   `user_id` INT(11) NOT NULL ,
   `latitude` FLOAT NOT NULL ,
   `longitude` FLOAT NOT NULL ,
-  `range` FLOAT NOT NULL ,
-  `metric` VARCHAR(1) NULL DEFAULT 'K' ,
+  `urange` FLOAT NOT NULL ,
+  `metric` VARCHAR(1) NOT NULL DEFAULT 'K' ,
   PRIMARY KEY (`id`) ,
   CONSTRAINT `fk_userlocation_user1`
     FOREIGN KEY (`user_id` )
