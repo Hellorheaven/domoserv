@@ -1,7 +1,4 @@
 <?php
-$home_long = 50.806831;
-$home_lat = 9.091528;
-$id_user[0]= '';
 $zlogin = ;
 $zpass = ;
 $zdevice = ; 

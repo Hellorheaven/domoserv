@@ -415,6 +415,32 @@ CREATE UNIQUE INDEX `modulenotify` ON `module_notify` (`usernotify_id` ASC, `mod
 
 SHOW WARNINGS;
 
+-- -----------------------------------------------------
+-- Table `userlocation`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `userlocation` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `userlocation` (
+  `id` INT NOT NULL AUTO_INCREMENT ,
+  `user_id` INT(11) NOT NULL ,
+  `latitude` FLOAT NOT NULL ,
+  `longitude` FLOAT NOT NULL ,
+  `range` FLOAT NOT NULL ,
+  `metric` VARCHAR(1) NULL DEFAULT 'K' ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_userlocation_user1`
+    FOREIGN KEY (`user_id` )
+    REFERENCES `user` (`user_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_userlocation_user1` ON `userlocation` (`user_id` ASC) ;
+
+SHOW WARNINGS;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
