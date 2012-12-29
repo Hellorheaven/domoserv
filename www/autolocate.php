@@ -20,7 +20,7 @@ while($UL = mysql_fetch_object($SUL)){
   $date = new DateTime();
   $datetimestamp = ($date->getTimestamp()-2*60);  //minus 2 min
 
-  if ( $timestamp <> $datetimestamp) { 
+  if ( $timestamp >= $datetimestamp) { 
     $lastdate = date('Y-m-d H:i:s',$timestamp);
     $QIUT = "insert into domoserv.usertracking (user_id,longitude,latitude,timestamp) values (".$UL->user_id.",'".$longitude."','".$latitude."','".$lastdate."');";
     $IUT = mysql_query($QIUT) or die('Error, query '.$QIUT.' failed. ' . mysql_error());
