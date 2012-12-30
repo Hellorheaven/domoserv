@@ -440,6 +440,9 @@ SHOW WARNINGS;
 CREATE INDEX `fk_userlocation_user1` ON `userlocation` (`user_id` ASC) ;
 
 SHOW WARNINGS;
+CREATE UNIQUE INDEX `lat_long_user` ON `userlocation` (`user_id` ASC) ;
+
+SHOW WARNINGS;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
