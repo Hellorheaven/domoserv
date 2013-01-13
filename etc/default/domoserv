@@ -1,11 +1,12 @@
-<?php
-$zlogin = ;
-$zpass = ;
-$zdevice = ; 
-$ztoken = ;
-$dbname = ;
-$dbport = ;
-$dbhost = ;
-$dbuser = ;
-$dbpass = ;
-?>
+[zibase]
+zlogin = XXXXXXXX
+zpass = XXXXXXX
+zdevice = ZiBASEXXXXXXX
+ztoken = XXXXXXXXX
+
+[database]
+dbname = domoserv
+dbhost = 192.168.0.1
+dbport = 3306
+dbuser = domoserv
+dbpass = password

@@ -1,0 +1,380 @@
+#!/usr/bin/perl -w
+eval 'exec /usr/bin/perl -w -S $0 ${1+"$@"}'
+if 0; # not running under some shell
+
+=head1 NAME
+
+xpl-mysql-logger - Perl script for logging infos into a MySQl database
+
+=head1 SYNOPSIS
+
+xpl-mysql-logger [flags] [options] [filter...]
+   where valid flags are:
+     -h - show this help text
+     -head - dump the head of all xPL messages
+     -body - dump the body of all xPL messages
+     -v - verbose client mode
+   and valid options are (default shown in brackets):
+     -i if0 - the interface for xPL messages (first non-loopback or loopback)
+   Any filter arguments are concatenated with space and passed to the
+   xPL callback setup.
+   # start the logger listening and broadcasting on first ethernet
+   # interface in verbose mode
+   xpl-mysql-logger -i eth0 -v
+   # start but only log "x10.*" messages
+   xpl-mysql-logger -i eth0 -v class=x10
+
+=head1 DESCRIPTION
+ This script is an xPL client that logs xPL incoming messages.  By
+ default it logs all incoming messages but filter arguments can be
+ passed on the command line which are concatenated (with spaces) and
+ passed to the xPL callback setup.  See L<xPL::Listener> man page for
+ more details of filters.
+=cut
+
+print("XPL-MySQL en fonctionnement.\n");
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use xPL::Client;
+use DBI;
+use Try::Tiny;
+use Config::Tiny;
+
+my $Config = Config::Tiny->new;
+$Config =  Config::Tiny->read( '/etc/default/domoserv');
+
+my $DB = $Config->{database}->{dbname};
+my $HOST = $Config->{database}->{dbhost};
+my $LOGIN = $Config->{database}->{dbuser};
+my $PWD = $Config->{database}->{dbpass};
+my $dbh = DBI->connect("dbi:mysql:dbname=$DB;host=$HOST;",$LOGIN,$PWD,{
+		PrintError => 0,
+        PrintWarn  => 1,
+        RaiseError => 1,
+        AutoCommit => 1,
+    }
+)
+or die "Connection impossible\n";
+$|=1; # autoflush helps debugging
+my %args = ( vendor_id => 'domoserv', device_id => 'logmysql', );
+my %opt = ();
+my $verbose;
+my $interface;
+my $help;
+my $man;
+my $verbose_head;
+my $verbose_body;
+
+
+GetOptions('verbose+' => \$verbose, 'interface=s' => \$interface, 'define=s' => \%opt, 'help|?|h' => \$help, 'man' => \$man, 'head' => \$verbose_head, 'body' => \$verbose_body, ) or pod2usage(2);
+pod2usage(1) if ($help);
+pod2usage(-exitstatus => 0, -verbose => 2) if ($man);
+$args{'interface'} = $interface if ($interface);
+$args{'verbose'} = $verbose if ($verbose);
+
+# Create an xPL Client object
+my $xpl = xPL::Client->new(%args, %opt) or die "Failed to create xPL::Client\n";
+
+# Add a callback to receive all incoming xPL messages
+$xpl->add_xpl_callback(id => "logger", self_skip => 0, targeted => 0, callback => \&log, filter => "@ARGV");
+
+# Run the main loop
+$xpl->main_loop();
+
+# The callback to log the incoming messages
+sub log {
+my %p = @_;
+my $msg = $p{message};
+my $peeraddr = $p{peeraddr};
+my $peerport = $p{peerport};
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+
+#DateTime au format AAAA-MM-JJ HH:MM:SS
+my $myDate = (1900+$year)."-".($mon+1)."-".$mday." ".$hour.":".$min.":".$sec;
+
+#Date et Heure individuelle
+my $curDate =(1900+$year)."-".($mon+1)."-".$mday;
+my $curTime = $hour.":".$min.":".$sec; 
+
+my ($ligne) = $msg->summary;
+# $ligne =~ m/.*\> \* (\w+ .*)/;
+# if (defined $1){
+# my $par1 = $1;
+
+# print "par1: ", $par1, "\n";
+if (index($ligne,"xpl-trig/") != -1){
+	if (index($ligne,"teleinfo.basic") != -1){
+		substr($ligne,0,index($ligne,"-> * ")+5) = "";
+		$ligne=~ s/\//\",\"/g;
+		if (length($ligne) == 123){
+			my $query = <<"			SQL";
+			INSERT INTO domoserv.teleinfo_tri 
+			(ADCO, OPTARIF, ISOUSC, HCHP, HCHC, PTEC, IINST1, IINST2, IINST3, IMAX1, IMAX2, IMAX3, PMAX, PAPP, HHPHC, MOTDETAT, PPOT)
+			VALUES("$ligne");
+			SQL
+			$dbh->do($query) or die "Echec Requete $query : $DBI::errstr";
+			$query = "";
+		} elsif (length($ligne) == 36) {
+			my $query = <<"			SQL";
+			INSERT INTO domoserv.teleinfo_tri 
+			(ADIR, ADCO, IINST1, IINST2, IINST3)
+			VALUES("$ligne");
+			SQL
+			$dbh->do($query) or die "Echec Requete $query : $DBI::errstr";
+			$query = "";
+		} else {
+			print "teleinfo: ", $ligne, "\n";
+			print length($ligne),"\n";
+		}
+	} elsif (index($ligne,"sensor.basic") != -1){
+		if (index($ligne,"battery") != -1 and index($ligne,"domoserv-zibase") != -1){
+			substr($ligne,0,index($ligne,"-> * ")+5) = "";
+			my @bat = split ("/",$ligne);
+			if ($bat[2] eq 'Ok') {
+				$bat[2] = 1;
+			} else {
+				$bat[2] = 0;
+			}
+				my $query = <<"				SQL";
+				INSERT INTO domoserv.battery 
+				(module_id, value)
+				VALUES(
+				(SELECT module_id 
+				FROM domoserv.module 
+				WHERE zibase_id = "$bat[0]"),
+				"$bat[2]")
+				ON DUPLICATE KEY UPDATE 
+				id=LAST_INSERT_ID(id),
+				value="$bat[2]";
+				SQL
+			try{
+				$dbh->do($query); 
+			}
+			catch {
+				warn "got dbi error: $_";
+				print $query;
+				#or die "Echec Requete $query : $DBI::errstr";
+			}
+		} else {
+			print "trigger: ", $ligne, "\n";
+		}
+	} else {
+		print "trigger: ", $ligne, "\n";
+	}
+
+} elsif (index($ligne,"xpl-stat/") != -1){
+	print "stat: ", $ligne, "\n";
+
+} else {
+	print "integre: ", $ligne, "\n";
+
+}
+
+
+
+
+ #==================================================================
+ #============= Capteur de consommation de courant =================
+ #==================================================================
+
+# if ($par1 =~ m/electrisave.a2\[current\]=(.*)/){
+# if (defined $1){
+# print "[".$myDate."]Consommation: ".$1." A\n";
+
+## Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDate, curTime, sensorType, sensorLocation, sensorValue, sensorUnit )VALUES ( "$curDate", "$curTime", "Conso", "Home", "$1", "A" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# }
+
+ #==================================================================
+ #============ Capteur de tempéture de la salle === ==============
+ #==================================================================
+# } elsif ($par1 =~ m/thr128.08\[temp\]=(.*)/){
+# print "[".$myDate."]Temperature Salle : ".$1." °C";
+# if ($prevTemp1 ne $1){
+# $prevTemp1 = $1;
+# print " <- NEW\n";
+
+## Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDateTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$myDate", "Temp", "Salle", "$1", "°C" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+
+#==================================================================
+ #============ Capteur de tempéture 2 === ==============
+ #==================================================================
+# } elsif ($par1 =~ m/thr128.0a\[temp\]=(.*)/){
+# print "[".$myDate."]Temperature Garage : ".$1." °C";
+# if ($prevTemp2 ne $1){
+# $prevTemp2 = $1;
+# print " <- NEW\n";
+
+## Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDateTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$myDate", "Temp", "Garage", "$1", "°C" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+
+ #==================================================================
+ #============ Capteur de temp/hygro/baro chambre     ==============
+ #==================================================================
+# } elsif ($par1 =~ m/bthr918n.5f\[temp\]=(.*)/){
+# print "[".$myDate."]Temperature2: ".$1." °C";
+# if ($prevTemp2 ne $1){
+# $prevTemp2 = $1;
+# print " (new)\n";
+
+## Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDate, curTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$curDate", "$curTime", "Temp2", "Cac", "$1", "°C" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+# } elsif ($par1 =~ m/bthr918n.5f\[humidity\]=(.*)/){
+# print "[".$myDate."]Humidite1: ".$1." %";
+# if ($prevHyg ne $1){
+# $prevHyg = $1;
+# print " (new)\n";
+
+## Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDate, curTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$curDate", "$curTime", "Hygro", "Cac", "$1", "%" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+# } elsif ($par1 =~ m/bthr918n.5f\[pressure\]=(.*)/){
+# print "[".$myDate."]Pression: ".$1." Hpa";
+# if ($prevPre ne $1){
+# $prevPre = $1;
+# print " (new)\n";
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDate, curTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$curDate", "$curTime", "Pression", "Cac", "$1", "Hpa" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+
+#==================================================================
+#============ Capteur de temp/hygro Exterieur =====================
+#==================================================================
+# } elsif ($par1 =~ m/thgr810.0f\[temp\]=(.*)/){
+# print "[".$myDate."]Temperature3: ".$1." °C";
+# if ($prevTemp3 ne $1){
+# $prevTemp3 = $1;
+# print " (new)\n";
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDate, curTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$curDate", "$curTime", "TempExt3", "Ext", "$1", "°C" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+# } elsif ($par1 =~ m/thgr810.0f\[humidity\]=(.*)/){
+# print "[".$myDate."]Humidite2: ".$1." %";
+# if ($prevHyg2 ne $1){
+# $prevHyg2 = $1;
+# print " (new)\n";
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# INSERT INTO sensor ( curDate, curTime, sensorType, sensorLocation, sensorValue, sensorUnit ) VALUES ( "$curDate", "$curTime", "HygroExt", "Ext", "$1", "%" );
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+
+ #==================================================================
+ #============ Gestion des niveaux de batterie          ============
+ #==================================================================
+# } elsif ($par1 =~ m/electrisave.a2\[battery\]=(.*)/){
+# if ($prevBat1 ne $1){
+# $prevBat1 = $1;
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# UPDATE battery SET curDate="$curDate", curTime="$curTime", batValue="$1" WHERE sensorLoc="electricite";
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# }
+# } elsif ($par1 =~ m/thr128.08\[battery\]=(.*)/){
+# print "[".$myDate."]Batterie Salle : ".$1." %";
+# if ($prevBat2 ne $1){
+# print " <- NEW\n";
+# $prevBat2 = $1;
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# UPDATE battery SET curDateTime= "$myDate", batValue="$1" WHERE sensorLoc="Salle";
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+# } elsif ($par1 =~ m/thr128.0a\[battery\]=(.*)/){
+# print "[".$myDate."]Batterie Garage : ".$1." %";
+# if ($prevBat3 ne $1){
+# print " <- NEW\n";
+# $prevBat3 = $1;
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# UPDATE battery SET curDateTime= "$myDate", batValue="$1" WHERE sensorLoc="Garage";
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# } else {
+# print("\n");
+# }
+# } elsif ($par1 =~ m/thgr810.0f\[battery\]=(.*)/){
+# if ($prevBat4 ne $1){
+# $prevBat4 = $1;
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# UPDATE battery SET curDate="$curDate", curTime="$curTime", batValue="$1" WHERE sensorLoc="jardin";
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# }
+# } elsif ($par1 =~ m/wgr800.91\[battery\]=(.*)/){
+# if ($prevBat5 ne $1){
+# $prevBat5 = $1;
+# # Insertion des donné
+# my $RequeteSQL = <<"SQL";
+# UPDATE battery SET curDate="$curDate", curTime="$curTime", batValue="$1" WHERE sensorLoc="girouette";
+# SQL
+# $dbh->do($RequeteSQL) or die "Echec Requete $RequeteSQL : $DBI::errstr";
+# }
+# }
+
+return 1;
+};
+
+
+
+$dbh->disconnect();
+# send a "hbeat.end" message on exit
+END { defined $xpl && $xpl->send_hbeat_end(); }
+=head1 SEE ALSO
+xPL::Client(3), xPL::Listener(3)
+Project website: http://www.xpl-perl.org.uk/
+=head1 AUTHOR
+Patrick Haeflinger 
+=head1 COPYRIGHT
+Copyright (C) 2010 by Patrick Haeflinger
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.7 or,
+at your option, any later version of Perl 5 you may have available.
+
