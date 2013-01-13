@@ -19,6 +19,7 @@ CREATE  TABLE IF NOT EXISTS `room` (
   `house_name` VARCHAR(45) NULL DEFAULT NULL ,
   PRIMARY KEY (`room_id`) )
 ENGINE = InnoDB
+AUTO_INCREMENT = 7
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
@@ -39,10 +40,10 @@ CREATE  TABLE IF NOT EXISTS `module` (
   `module_protocol` INT(3) NOT NULL ,
   `module_name` VARCHAR(45) NOT NULL ,
   `module_type` INT(3) NOT NULL ,
-  `module_description` VARCHAR(100) NULL DEFAULT NULL ,
+  `module_description` VARCHAR(256) NULL DEFAULT NULL ,
   `notify` TINYINT(1) NOT NULL DEFAULT '0' ,
-  `notify_title` VARCHAR(100) NULL DEFAULT NULL ,
-  `notify_message` VARCHAR(300) NULL DEFAULT NULL ,
+  `notify_title` VARCHAR(256) NULL DEFAULT NULL ,
+  `notify_message` VARCHAR(512) NULL DEFAULT NULL ,
   PRIMARY KEY (`module_id`) ,
   CONSTRAINT `fk_module_room1`
     FOREIGN KEY (`room_id` )
@@ -50,6 +51,7 @@ CREATE  TABLE IF NOT EXISTS `module` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
+AUTO_INCREMENT = 4
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
@@ -69,8 +71,7 @@ SHOW WARNINGS;
 CREATE  TABLE IF NOT EXISTS `battery` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `module_id` INT(11) NOT NULL ,
-  `curdate` DATE NOT NULL ,
-  `curtime` TIME NOT NULL ,
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   `value` VARCHAR(45) NOT NULL ,
   PRIMARY KEY (`id`) ,
   CONSTRAINT `fk_battery_module1`
@@ -115,6 +116,94 @@ CREATE UNIQUE INDEX `host_services` ON `host_services` (`host` ASC, `port` ASC) 
 
 SHOW WARNINGS;
 CREATE INDEX `fk_host_services_room1_idx` ON `host_services` (`room_id` ASC) ;
+
+SHOW WARNINGS;
+
+-- -----------------------------------------------------
+-- Table `user`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `user` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `user` (
+  `user_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `username` VARCHAR(45) NOT NULL ,
+  `firstname` VARCHAR(45) NOT NULL ,
+  `lastname` VARCHAR(45) NOT NULL ,
+  `password` VARCHAR(45) NOT NULL ,
+  `userlevel` VARCHAR(45) NOT NULL DEFAULT 'user' ,
+  `userlatitude` VARCHAR(45) NULL DEFAULT NULL ,
+  PRIMARY KEY (`user_id`) )
+ENGINE = InnoDB
+AUTO_INCREMENT = 4
+DEFAULT CHARACTER SET = utf8;
+
+SHOW WARNINGS;
+CREATE UNIQUE INDEX `user` ON `user` (`username` ASC) ;
+
+SHOW WARNINGS;
+
+-- -----------------------------------------------------
+-- Table `usernotify`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `usernotify` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `usernotify` (
+  `usernotify_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `user_id` INT(11) NOT NULL ,
+  `devices` VARCHAR(45) NOT NULL DEFAULT 'all' ,
+  `type` VARCHAR(32) NOT NULL ,
+  `contact` VARCHAR(100) NOT NULL ,
+  PRIMARY KEY (`usernotify_id`) ,
+  CONSTRAINT `fk_usernotify_user1`
+    FOREIGN KEY (`user_id` )
+    REFERENCES `user` (`user_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+SHOW WARNINGS;
+CREATE UNIQUE INDEX `usernotify` ON `usernotify` (`user_id` ASC, `devices` ASC, `type` ASC, `contact` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_usernotify_user1_idx` ON `usernotify` (`user_id` ASC) ;
+
+SHOW WARNINGS;
+
+-- -----------------------------------------------------
+-- Table `module_notify`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `module_notify` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `module_notify` (
+  `modulenotify_id` INT(11) NOT NULL AUTO_INCREMENT ,
+  `module_id` INT(11) NOT NULL ,
+  `usernotify_id` INT(11) NOT NULL ,
+  PRIMARY KEY (`modulenotify_id`) ,
+  CONSTRAINT `fk_module_notify_module1`
+    FOREIGN KEY (`module_id` )
+    REFERENCES `module` (`module_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_module_notify_usernotify1`
+    FOREIGN KEY (`usernotify_id` )
+    REFERENCES `usernotify` (`usernotify_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+SHOW WARNINGS;
+CREATE UNIQUE INDEX `modulenotify` ON `module_notify` (`usernotify_id` ASC, `module_id` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_module_notify_module1` ON `module_notify` (`module_id` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_module_notify_usernotify1` ON `module_notify` (`usernotify_id` ASC) ;
 
 SHOW WARNINGS;
 
@@ -186,9 +275,7 @@ DROP TABLE IF EXISTS `teleinfo_mono` ;
 SHOW WARNINGS;
 CREATE  TABLE IF NOT EXISTS `teleinfo_mono` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `timestamp` BIGINT(10) NOT NULL ,
-  `rec_date` DATE NOT NULL ,
-  `rec_time` TIME NOT NULL ,
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   `adco` VARCHAR(12) NOT NULL ,
   `optarif` VARCHAR(4) NOT NULL ,
   `isousc` TINYINT(2) NULL DEFAULT NULL ,
@@ -212,6 +299,7 @@ CREATE  TABLE IF NOT EXISTS `teleinfo_mono` (
   `papp` INT(5) NULL DEFAULT NULL ,
   `hhphc` VARCHAR(1) NULL DEFAULT NULL ,
   `motdetat` VARCHAR(6) NULL DEFAULT NULL ,
+  `pmax` INT(6) NULL DEFAULT NULL ,
   PRIMARY KEY (`id`) )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
@@ -229,69 +317,32 @@ DROP TABLE IF EXISTS `teleinfo_tri` ;
 SHOW WARNINGS;
 CREATE  TABLE IF NOT EXISTS `teleinfo_tri` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `timestamp` BIGINT(10) NOT NULL ,
-  `rec_date` DATE NOT NULL ,
-  `rec_time` TIME NOT NULL ,
-  `adco` VARCHAR(12) NOT NULL ,
-  `optarif` VARCHAR(4) NOT NULL ,
-  `isousc` TINYINT(2) NULL DEFAULT NULL ,
-  `base` BIGINT(9) NULL DEFAULT NULL ,
-  `hchc` BIGINT(9) NULL DEFAULT NULL ,
-  `hchp` BIGINT(9) NULL DEFAULT NULL ,
-  `ejphn` BIGINT(9) NULL DEFAULT NULL ,
-  `ejphpm` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjb` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjb` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjw` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjw` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhcjr` BIGINT(9) NULL DEFAULT NULL ,
-  `bbrhpjr` BIGINT(9) NULL DEFAULT NULL ,
-  `pejp` VARCHAR(4) NULL DEFAULT NULL ,
-  `ptec` VARCHAR(4) NULL DEFAULT NULL ,
-  `demain` VARCHAR(4) NULL DEFAULT NULL ,
-  `iinst1` TINYINT(3) NULL DEFAULT NULL ,
-  `iinst2` TINYINT(3) NULL DEFAULT NULL ,
-  `iinst3` TINYINT(3) NULL DEFAULT NULL ,
-  `adir1` TINYINT(3) NULL DEFAULT NULL ,
-  `adir2` TINYINT(3) NULL DEFAULT NULL ,
-  `adir3` TINYINT(3) NULL DEFAULT NULL ,
-  `imax1` TINYINT(3) NULL DEFAULT NULL ,
-  `imax2` TINYINT(3) NULL DEFAULT NULL ,
-  `imax3` TINYINT(3) NULL DEFAULT NULL ,
-  `papp` INT(5) NULL DEFAULT NULL ,
-  `hhphc` VARCHAR(1) NULL DEFAULT NULL ,
-  `motdetat` VARCHAR(6) NULL DEFAULT NULL ,
-  `ppot` TINYINT(2) NULL DEFAULT NULL ,
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  `ADCO` VARCHAR(12) NOT NULL ,
+  `OPTARIF` VARCHAR(4) NOT NULL ,
+  `ISOUSC` TINYINT(2) NULL DEFAULT NULL ,
+  `HCHP` BIGINT(9) NULL DEFAULT NULL ,
+  `HCHC` BIGINT(9) NULL DEFAULT NULL ,
+  `PTEC` VARCHAR(4) NULL DEFAULT NULL ,
+  `IINST1` TINYINT(3) NULL DEFAULT NULL ,
+  `IINST2` TINYINT(3) NULL DEFAULT NULL ,
+  `IINST3` TINYINT(3) NULL DEFAULT NULL ,
+  `IMAX1` TINYINT(3) NULL DEFAULT NULL ,
+  `IMAX2` TINYINT(3) NULL DEFAULT NULL ,
+  `IMAX3` TINYINT(3) NULL DEFAULT NULL ,
+  `PMAX` INT(6) NULL DEFAULT NULL ,
+  `PAPP` INT(5) NULL DEFAULT NULL ,
+  `HHPHC` VARCHAR(1) NULL DEFAULT NULL ,
+  `MOTDETAT` VARCHAR(6) NULL DEFAULT NULL ,
+  `PPOT` TINYINT(2) NULL DEFAULT NULL ,
+  `ADIR` TINYINT(3) NULL DEFAULT NULL ,
   PRIMARY KEY (`id`) )
 ENGINE = InnoDB
+AUTO_INCREMENT = 9838
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
-CREATE UNIQUE INDEX `timestamp` ON `teleinfo_tri` (`timestamp` ASC) ;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `user`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `user` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `user` (
-  `user_id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `username` VARCHAR(45) NOT NULL ,
-  `firstname` VARCHAR(45) NOT NULL ,
-  `lastname` VARCHAR(45) NOT NULL ,
-  `password` VARCHAR(45) NOT NULL ,
-  `userlevel` VARCHAR(45) NOT NULL DEFAULT 'user' ,
-  `userlatitude` VARCHAR(45) NULL DEFAULT NULL ,
-  PRIMARY KEY (`user_id`) )
-ENGINE = InnoDB
-AUTO_INCREMENT = 2
-DEFAULT CHARACTER SET = utf8;
-
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `user` ON `user` (`username` ASC) ;
+CREATE UNIQUE INDEX `timestamp_UNIQUE` ON `teleinfo_tri` (`timestamp` ASC) ;
 
 SHOW WARNINGS;
 
@@ -313,6 +364,7 @@ CREATE  TABLE IF NOT EXISTS `userhome` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
+AUTO_INCREMENT = 3
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
@@ -324,31 +376,33 @@ CREATE INDEX `fk_userhome_user1_idx` ON `userhome` (`user_id` ASC) ;
 SHOW WARNINGS;
 
 -- -----------------------------------------------------
--- Table `usernotify`
+-- Table `userlocation`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `usernotify` ;
+DROP TABLE IF EXISTS `userlocation` ;
 
 SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `usernotify` (
-  `usernotify_id` INT(11) NOT NULL AUTO_INCREMENT ,
+CREATE  TABLE IF NOT EXISTS `userlocation` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `user_id` INT(11) NOT NULL ,
-  `devices` VARCHAR(45) NOT NULL DEFAULT 'all' ,
-  `type` VARCHAR(32) NOT NULL ,
-  `contact` VARCHAR(100) NOT NULL ,
-  PRIMARY KEY (`usernotify_id`) ,
-  CONSTRAINT `fk_usernotify_user1`
+  `latitude` FLOAT NOT NULL ,
+  `longitude` FLOAT NOT NULL ,
+  `urange` FLOAT NOT NULL ,
+  `metric` VARCHAR(1) NOT NULL DEFAULT 'K' ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_userlocation_user1`
     FOREIGN KEY (`user_id` )
     REFERENCES `user` (`user_id` )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
+AUTO_INCREMENT = 3
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
-CREATE UNIQUE INDEX `usernotify` ON `usernotify` (`user_id` ASC, `devices` ASC, `type` ASC, `contact` ASC) ;
+CREATE UNIQUE INDEX `lat_long_user` ON `userlocation` (`user_id` ASC) ;
 
 SHOW WARNINGS;
-CREATE INDEX `fk_usernotify_user1_idx` ON `usernotify` (`user_id` ASC) ;
+CREATE INDEX `fk_userlocation_user1` ON `userlocation` (`user_id` ASC) ;
 
 SHOW WARNINGS;
 
@@ -371,6 +425,7 @@ CREATE  TABLE IF NOT EXISTS `usertracking` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
+AUTO_INCREMENT = 646
 DEFAULT CHARACTER SET = utf8;
 
 SHOW WARNINGS;
@@ -378,69 +433,6 @@ CREATE UNIQUE INDEX `usertracking` ON `usertracking` (`user_id` ASC, `timestamp`
 
 SHOW WARNINGS;
 CREATE INDEX `fk_usertracking_user1_idx` ON `usertracking` (`user_id` ASC) ;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `module_notify`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `module_notify` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `module_notify` (
-  `modulenotify_id` INT NOT NULL AUTO_INCREMENT ,
-  `module_id` INT(11) NOT NULL ,
-  `usernotify_id` INT(11) NOT NULL ,
-  PRIMARY KEY (`modulenotify_id`) ,
-  CONSTRAINT `fk_module_notify_module1`
-    FOREIGN KEY (`module_id` )
-    REFERENCES `module` (`module_id` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_module_notify_usernotify1`
-    FOREIGN KEY (`usernotify_id` )
-    REFERENCES `usernotify` (`usernotify_id` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-SHOW WARNINGS;
-CREATE INDEX `fk_module_notify_module1` ON `module_notify` (`module_id` ASC) ;
-
-SHOW WARNINGS;
-CREATE INDEX `fk_module_notify_usernotify1` ON `module_notify` (`usernotify_id` ASC) ;
-
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `modulenotify` ON `module_notify` (`usernotify_id` ASC, `module_id` ASC) ;
-
-SHOW WARNINGS;
-
--- -----------------------------------------------------
--- Table `userlocation`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `userlocation` ;
-
-SHOW WARNINGS;
-CREATE  TABLE IF NOT EXISTS `userlocation` (
-  `id` INT NOT NULL AUTO_INCREMENT ,
-  `user_id` INT(11) NOT NULL ,
-  `latitude` FLOAT NOT NULL ,
-  `longitude` FLOAT NOT NULL ,
-  `urange` FLOAT NOT NULL ,
-  `metric` VARCHAR(1) NOT NULL DEFAULT 'K' ,
-  PRIMARY KEY (`id`) ,
-  CONSTRAINT `fk_userlocation_user1`
-    FOREIGN KEY (`user_id` )
-    REFERENCES `user` (`user_id` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-SHOW WARNINGS;
-CREATE INDEX `fk_userlocation_user1` ON `userlocation` (`user_id` ASC) ;
-
-SHOW WARNINGS;
-CREATE UNIQUE INDEX `lat_long_user` ON `userlocation` (`user_id` ASC) ;
 
 SHOW WARNINGS;
 
