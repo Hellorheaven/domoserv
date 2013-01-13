@@ -15,7 +15,7 @@ define('HOST_STUNNEL', '127.0.0.1');    // Secure connection, slower performance
 define('DB_HOST', HOST_DIRECT);         // Choose HOST_DIRECT or HOST_STUNNEL, depending on your application's requirements
  
 define('DB_USER', $iniDomoserv['database']['dbuser']);    // MySQL account username
-define('DB_PASS', $iniDomoserv['database']['dbuser']);    // MySQL account password
+define('DB_PASS', $iniDomoserv['database']['dbpass']);    // MySQL account password
 define('DB_NAME', $iniDomoserv['database']['dbname']);     // Name of database
 define('DB_PORT',  $iniDomoserv['database']['dbport']);     // port of mysql server
  
