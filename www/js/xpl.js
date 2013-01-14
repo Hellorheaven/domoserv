@@ -11,7 +11,7 @@ function SendXPL( xPLType, xPLTarget, xPLSchema, xPLBody )
   }
 
   var IFrameDoc;
-  var URL = "../function/xpl.php?type="+xPLType+"&target="+xPLTarget+"&schema="+xPLSchema+"&body="+xPLBody;
+  var URL = "./function/xpl.php?type="+xPLType+"&target="+xPLTarget+"&schema="+xPLSchema+"&body="+xPLBody;
 
   if (!IFrameObj && document.createElement) {
     // create the IFrame and assign a reference to the

@@ -9,11 +9,12 @@
 	error_reporting(E_ALL);
 	ini_set('error_reporting', E_ALL);
     
-    $broadcast = "255.255.255.255";		// Broadcast address
+    $broadcast=shell_exec('/sbin/ifconfig | /bin/grep Bcast | /usr/bin/cut -d : -f 3 | /usr/bin/cut -d " " -f 1');		// Broadcast address
     $port = 3865;						// xPL UDP assigned port
 	$listenOnAddress="ANY_LOCAL";		// This must match the ListenOnAddress in the xPL network settings.
 //	$listenOnAddress="192.168.0.3";
-	$xPLSource = "domoserv-php.intranet";	// Identifies the source of the message (vendor-device.instance)
+	$hostname=gethostname();
+    $xPLSource = "domoserv-php.".$hostname;	// Identifies the source of the message (vendor-device.instance)
 
 	$xPLType = $_GET['type'];
 	$xPLTarget = $_GET['target'];
