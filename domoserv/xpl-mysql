@@ -132,6 +132,14 @@ if (index($ligne,"xpl-trig/") != -1){
 		if (index($ligne,"battery") != -1 and index($ligne,"domoserv-zibase") != -1){
 			substr($ligne,0,index($ligne,"-> * ")+5) = "";
 			my @bat = split ("/",$ligne);
+			$bat[0]=uc $bat[0];
+			if (index($bat[0],"WZ") !=-1) {
+			substr($bat[0],0)=""
+			} elsif (index($bat[0],"_OFF") !=-1) {
+			$bat[0]=substr($bat[0],0,-4)
+			} elsif (index($bat[0],"_ON") !=-1) {
+			$bat[0]=substr($bat[0],0,-3)
+			}
 			if ($bat[2] eq 'Ok') {
 				$bat[2] = 1;
 			} else {
@@ -140,13 +148,12 @@ if (index($ligne,"xpl-trig/") != -1){
 				my $query = <<"				SQL";
 				INSERT INTO domoserv.battery 
 				(module_id, value)
-				VALUES(
-				(SELECT module_id 
-				FROM domoserv.module 
-				WHERE zibase_id = "$bat[0]"),
+				VALUES((SELECT module_id FROM domoserv.module WHERE zibase_id = "$bat[0]"),
 				"$bat[2]")
 				ON DUPLICATE KEY UPDATE 
 				id=LAST_INSERT_ID(id),
+				module_id=(SELECT module_id FROM domoserv.module WHERE zibase_id = "$bat[0]"),
+				timestamp=null,
 				value="$bat[2]";
 				SQL
 			try{
