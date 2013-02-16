@@ -436,6 +436,39 @@ CREATE INDEX `fk_usertracking_user1_idx` ON `usertracking` (`user_id` ASC) ;
 
 SHOW WARNINGS;
 
+-- -----------------------------------------------------
+-- Table `camip`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `camip` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `camip` (
+  `camip_id` INT NOT NULL AUTO_INCREMENT ,
+  `room_id` INT(11) NOT NULL ,
+  `name` VARCHAR(45) NOT NULL ,
+  `brand` VARCHAR(45) NULL ,
+  `model` VARCHAR(45) NULL ,
+  `host` VARCHAR(15) NOT NULL DEFAULT '0.0.0.0' ,
+  `port` TINYINT(5) NOT NULL DEFAULT 80 ,
+  `user` VARCHAR(45) NOT NULL ,
+  `pwd` VARCHAR(45) NOT NULL ,
+  `alarm` TINYINT(1) NOT NULL DEFAULT 0 ,
+  PRIMARY KEY (`camip_id`) ,
+  CONSTRAINT `fk_camip_room1`
+    FOREIGN KEY (`room_id` )
+    REFERENCES `room` (`room_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+SHOW WARNINGS;
+CREATE UNIQUE INDEX `camera` ON `camip` (`name` ASC, `host` ASC, `port` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_camip_room1` ON `camip` (`room_id` ASC) ;
+
+SHOW WARNINGS;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
