@@ -437,6 +437,21 @@ CREATE INDEX `fk_usertracking_user1_idx` ON `usertracking` (`user_id` ASC) ;
 SHOW WARNINGS;
 
 -- -----------------------------------------------------
+-- Table `camtype`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `camtype` ;
+
+SHOW WARNINGS;
+CREATE  TABLE IF NOT EXISTS `camtype` (
+  `type_id` INT NOT NULL AUTO_INCREMENT ,
+  `brand` VARCHAR(45) NOT NULL ,
+  `model` VARCHAR(45) NOT NULL ,
+  PRIMARY KEY (`type_id`) )
+ENGINE = InnoDB;
+
+SHOW WARNINGS;
+
+-- -----------------------------------------------------
 -- Table `camip`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `camip` ;
@@ -446,10 +461,9 @@ CREATE  TABLE IF NOT EXISTS `camip` (
   `camip_id` INT NOT NULL AUTO_INCREMENT ,
   `room_id` INT(11) NOT NULL ,
   `name` VARCHAR(45) NOT NULL ,
-  `brand` VARCHAR(45) NULL ,
-  `model` VARCHAR(45) NULL ,
+  `type_id` INT NOT NULL ,
   `host` VARCHAR(15) NOT NULL DEFAULT '0.0.0.0' ,
-  `port` TINYINT(5) NOT NULL DEFAULT 80 ,
+  `port` INT(5) NOT NULL DEFAULT 80 ,
   `user` VARCHAR(45) NOT NULL ,
   `pwd` VARCHAR(45) NOT NULL ,
   `alarm` TINYINT(1) NOT NULL DEFAULT 0 ,
@@ -457,6 +471,11 @@ CREATE  TABLE IF NOT EXISTS `camip` (
   CONSTRAINT `fk_camip_room1`
     FOREIGN KEY (`room_id` )
     REFERENCES `room` (`room_id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_camip_camtype1`
+    FOREIGN KEY (`type_id` )
+    REFERENCES `camtype` (`type_id` )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -466,6 +485,9 @@ CREATE UNIQUE INDEX `camera` ON `camip` (`name` ASC, `host` ASC, `port` ASC) ;
 
 SHOW WARNINGS;
 CREATE INDEX `fk_camip_room1` ON `camip` (`room_id` ASC) ;
+
+SHOW WARNINGS;
+CREATE INDEX `fk_camip_camtype1` ON `camip` (`type_id` ASC) ;
 
 SHOW WARNINGS;
 
@@ -480,5 +502,14 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 START TRANSACTION;
 USE `domoserv`;
 INSERT INTO `user` (`user_id`, `username`, `firstname`, `lastname`, `password`, `userlevel`, `userlatitude`) VALUES (1, 'admin', 'Administrator', 'DomoServ', '*F51AB0CE61F44E7DBC15CBB26966ADFCE2AEEB73', 'admin', NULL);
+
+COMMIT;
+
+-- -----------------------------------------------------
+-- Data for table `camtype`
+-- -----------------------------------------------------
+START TRANSACTION;
+USE `domoserv`;
+INSERT INTO `camtype` (`type_id`, `brand`, `model`) VALUES (1, 'heden', 'visioncam 2.2');
 
 COMMIT;

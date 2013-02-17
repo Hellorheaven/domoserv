@@ -1,5 +1,6 @@
 <?php
 require_once("./function/camera.php");
+require_once("./function/database.php");
 /*
 http://ipcam_url/live.htm
 http://ipcam_url/videostream.cgi
@@ -29,7 +30,7 @@ http://ipcam_url/camera_control.cgi?param=5&value=1(Vertical flip image)
 http://ipcam_url/camera_control.cgi?param=5&value=2(mirror image)
 */
 
-$result = CamCommand($_GET["cam"], $_GET["com"], $_GET["step"], $_GET["deg"]);
+$result = CamCommand($_GET["id"], $_GET["com"], $_GET["step"], $_GET["deg"]);
 if( $result['success'] == FALSE )
 {
   print $result['error'];
