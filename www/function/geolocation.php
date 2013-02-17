@@ -10,19 +10,19 @@ Function SetIsHome ($UID, $lastdate, $state){
 }
 
 Function GetIsHome($UID){
-  $query = "select timestamp,home from domoserv.userhome where user_id = ".$UID.";";
+  $query = "SELECT timestamp,home FROM domoserv.userhome WHERE user_id = ".$UID.";";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
 
 Function GetHome($state){
-  $query = "select user_id,timestamp from domoserv.userhome where home = ".$state.";";
+  $query = "SELECT user_id,timestamp FROM domoserv.userhome WHERE home = ".$state.";";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
 
 Function DeleteIshome($UID){
-  $query = "DELETE FROM domoserv.userhome where user_id=".$UID.";";
+  $query = "DELETE FROM domoserv.userhome WHERE user_id=".$UID.";";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
@@ -40,21 +40,21 @@ Function GetGoogleUserLocation($address){
   return array ($Lat,$Lon);
 }
 
-Function SetUserLocation($UID, $Lat, $Lon, $range, $metric){
-  $query = "INSERT INTO domoserv.userlocation (user_id,latitude,longitude,urange,metric) values (".$UID.",".$Lat.",".$Long.",".$range.",".$metric.")";
-  $query .= " ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), latitude=".$Lat.",longitude=".$Long.",urange=".$range.",metric=".$metric.";";
+Function SetUserLocation($UID, $Lat, $Long, $range, $metric){
+  $query = "INSERT INTO domoserv.userlocation (user_id,latitude,Longitude,urange,metric) VALUES (".$UID.",".$Lat.",".$Long.",".$range.",".$metric.")";
+  $query .= " ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), latitude=".$Lat.",Longitude=".$Long.",urange=".$range.",metric=".$metric.";";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
 
 Function GetUserlocation($UID){
-  $query = "select latitude,longitude,urange,metric from domoserv.userlocation where user_id = ".$UID.";";
+  $query = "SELECT latitude,Longitude,urange,metric FROM domoserv.userlocation WHERE user_id = ".$UID.";";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
 
 Function DeleteUserLocation($UID){
-  $query = "DELETE FROM domoserv.userlocation where user_id=".$UID.";";
+  $query = "DELETE FROM domoserv.userlocation WHERE user_id=".$UID.";";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
@@ -81,7 +81,7 @@ Function GetUserPosition($userlatitude){
 /*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
 /*::                                                                         :*/
 /*::    unit = the unit you desire for$results                               :*/
-/*::           where: 'M' is statute miles                                   :*/
+/*::           WHERE: 'M' is statute miles                                   :*/
 /*::                  'K' is kilometers                                      :*/
 /*::                  'N' is nautical miles                                  :*/
 /*::                                                                         :*/
@@ -108,7 +108,7 @@ Function distance($lat1, $lon1, $lat2, $lon2, $unit) {
 // Section usertracking
 
 Function SetUserTracking($UID, $longitude, $latitude, $lastdate){
-  $query = "insert into domoserv.usertracking (user_id,longitude,latitude,timestamp) values (".$UID.",'".$longitude."','".$latitude."','".$lastdate."');";
+  $query = "INSERT INTO domoserv.usertracking (user_id,longitude,latitude,timestamp) VALUES (".$UID.",'".$longitude."','".$latitude."','".$lastdate."');";
   $result = mysql_query($query) or die('Error, query '.$query.' failed. ' . mysql_error());
   return $result;
 }
